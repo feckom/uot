@@ -1,254 +1,342 @@
 
-Universal Offline Translator
-Version 1.0
-Author: Michal Fecko, 2025 (feckom@gmail.com)
+# Universal Offline Translator (UOT)
 
-=======================================================================
-📚 Table of Contents
-=======================================================================
+**Version**: 1.0  
+**Author**: Michal Fecko, 2025 (feckom@gmail.com)
 
-- English
-  - Introduction
-  - Features
-  - Installation
-  - Requirements
-  - Usage
-  - Environment Variables
-  - Examples
-  - License
-- Čeština
-  - Úvod
-  - Vlastnosti
-  - Instalace
-  - Požadavky
-  - Použití
-  - Proměnné prostředí
-  - Příklady
-  - Licence
-- Slovenčina
-  - Úvod
-  - Funkcie
-  - Inštalácia
-  - Požiadavky
-  - Použitie
-  - Premenné prostredia
-  - Príklady
-  - Licencia
+---
 
-=======================================================================
-🇬🇧 ENGLISH
-=======================================================================
+## 📚 Table of Contents
 
-INTRODUCTION
-Universal Offline Translator (UOT) is a command-line tool for translating text between languages without an internet connection, powered by Argos Translate.
-With OT, you can:
+- [🇬🇧 English](#english)
+  - [Introduction](#introduction)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Requirements](#requirements)
+  - [Usage](#usage)
+  - [Environment Variables](#environment-variables)
+  - [Examples](#examples)
+  - [License](#license)
+- [🇨🇿 Čeština](#čeština)
+  - [Úvod](#úvod)
+  - [Vlastnosti](#vlastnosti)
+  - [Instalace](#instalace)
+  - [Požadavky](#požadavky)
+  - [Použití](#použití)
+  - [Proměnné prostředí](#proměnné-prostředí)
+  - [Příklady](#příklady)
+  - [Licence](#licence)
+- [🇸🇰 Slovenčina](#slovenčina)
+  - [Úvod](#úvod-1)
+  - [Funkcie](#funkcie)
+  - [Inštalácia](#inštalácia)
+  - [Požiadavky](#požiadavky)
+  - [Použitie](#použitie)
+  - [Premenné prostredia](#premenné-prostredia)
+  - [Príklady](#príklady-1)
+  - [Licencia](#licencia)
+
+---
+
+# 🇬🇧 English
+
+## Introduction
+
+**Universal Offline Translator (UOT)** is a command-line tool for translating text between languages **without an internet connection**, powered by **Argos Translate**.
+
+### With UOT, you can:
 - Translate text instantly, fully offline.
 - Download and manage translation models.
 - Run it on Windows, Linux, and macOS.
 
-FEATURES
-- Fully offline translations (no internet after model installation)
-- Download translation models directly from Argos OpenTech index (-im)
-- Easy-to-use command-line interface
-- Supports text input from arguments or stdin
-- Performance and memory usage info with -i flag
-- Custom models directory with UOT_MODELS_DIR env variable
+## Features
 
-INSTALLATION
+- Fully offline translations (no internet after model installation).
+- Download translation models directly from Argos OpenTech index (`-im`).
+- Easy-to-use command-line interface.
+- Supports text input from arguments or stdin.
+- Performance and memory usage info with `-i` flag.
+- Custom models directory via `UOT_MODELS_DIR` environment variable.
 
-Windows
------------------------------------
-git clone https://github.com/yourusername/uuot.git
+## Installation
+
+### Windows
+
+```bash
+git clone https://github.com/feckom/uot.git
 cd uot
 python -m venv venv
 venv\Scripts\activate.bat
 pip install -r requirements.txt
+```
 
-Linux / macOS
------------------------------------
-git clone https://github.com/yourusername/uuot.git
+### Linux / macOS
+
+```bash
+git clone https://github.com/feckom/uot.git
 cd uot
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-REQUIREMENTS
+## Requirements
+
 - Python 3.8+
 - Dependencies:
-  - argostranslate
-  - requests
-  - psutil
+  - `argostranslate`
+  - `requests`
+  - `psutil`
 
-USAGE
+## Usage
+
+```bash
 python uot.py [options] [text]
+```
 
-OPTIONS
-- -il    Input language code (e.g., en, sk)
-- -ol    Output language code (e.g., sk, en)
-- -i     Interactive mode (show [INFO] debug messages)
-- -v     Show version and author information
-- -im    Install models from the Argos OpenTech index
+### Options
 
-ENVIRONMENT VARIABLES
-- UOT_MODELS_DIR    Custom path to store downloaded model files
+| Option | Description                                                  |
+|--------|--------------------------------------------------------------|
+| `-il`  | Input language code (e.g., `en`, `sk`)                      |
+| `-ol`  | Output language code (e.g., `sk`, `en`)                     |
+| `-i`   | Interactive mode (show `[INFO]` debug messages)             |
+| `-v`   | Show version and author information                         |
+| `-im`  | Install models from the Argos OpenTech index                |
 
-EXAMPLES
-Basic translation:
-  python uot.py -il en -ol sk Hello world
+## Environment Variables
 
-Verbose translation with info logs:
-  python uot.py -il en -ol sk Hello world -i
+| Variable         | Description                                         |
+|------------------|-----------------------------------------------------|
+| `UOT_MODELS_DIR` | Custom path to store downloaded model files         |
 
-Translate from stdin:
-  echo "Hello world" | python uot.py -il en -ol sk
+## Examples
 
-Install models from Argos OpenTech index:
-  python uot.py -im -i
+### Basic translation
+```bash
+python uot.py -il en -ol sk Hello world
+```
 
-Show version info:
-  python uot.py -v
+### Verbose translation with info logs
+```bash
+python uot.py -il en -ol sk Hello world -i
+```
 
-LICENSE
+### Translate from stdin
+```bash
+echo "Hello world" | python uot.py -il en -ol sk
+```
+
+### Install models from Argos OpenTech index
+```bash
+python uot.py -im -i
+```
+
+### Show version info
+```bash
+python uot.py -v
+```
+
+## License
+
 MIT License
 
-=======================================================================
-🇨🇿 ČEŠTINA
-=======================================================================
+---
 
-ÚVOD
-Universal Offline Translator (UOT) je nástroj příkazového řádku pro překlad textů mezi jazyky bez připojení k internetu, využívající Argos Translate.
+# 🇨🇿 Čeština
 
-VLASTNOSTI
-- Offline překlady (internet pouze pro stažení modelů)
-- Stažení a instalace modelů přímo z Argos OpenTech indexu (-im)
-- Jednoduché CLI rozhraní
-- Podpora vstupu z argumentů i stdin
-- Výpis výkonu a paměťového využití s parametrem -i
-- Možnost nastavit vlastní adresář pro modely pomocí UOT_MODELS_DIR
+## Úvod
 
-INSTALACE
+**Universal Offline Translator (UOT)** je nástroj příkazového řádku pro překlad textů mezi jazyky **bez připojení k internetu**, využívající **Argos Translate**.
 
-Windows
------------------------------------
-git clone https://github.com/yourusername/uuot.git
+## Vlastnosti
+
+- Offline překlady (internet pouze pro stažení modelů).
+- Stažení a instalace modelů přímo z Argos OpenTech indexu (`-im`).
+- Jednoduché CLI rozhraní.
+- Podpora vstupu z argumentů i stdin.
+- Výpis výkonu a paměťového využití s parametrem `-i`.
+- Možnost nastavit vlastní adresář pro modely pomocí `UOT_MODELS_DIR`.
+
+## Instalace
+
+### Windows
+
+```bash
+git clone https://github.com/feckom/uot.git
 cd uot
 python -m venv venv
 venv\Scripts\activate.bat
 pip install -r requirements.txt
+```
 
-Linux / macOS
------------------------------------
-git clone https://github.com/yourusername/uuot.git
+### Linux / macOS
+
+```bash
+git clone https://github.com/feckom/uot.git
 cd uot
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-POŽADAVKY
+## Požadavky
+
 - Python 3.8+
 - Závislosti:
-  - argostranslate
-  - requests
-  - psutil
+  - `argostranslate`
+  - `requests`
+  - `psutil`
 
-POUŽITÍ
+## Použití
+
+```bash
 python uot.py [parametry] [text]
+```
 
-PARAMETRY
-- -il    Vstupní jazyk (např. en, sk)
-- -ol    Výstupní jazyk (např. sk, en)
-- -i     Interaktivní režim (zobrazuje [INFO] logy)
-- -v     Zobrazí verzi a informace o autorovi
-- -im    Instalace modelů z Argos OpenTech indexu
+### Parametry
 
-PROMĚNNÉ PROSTŘEDÍ
-- UOT_MODELS_DIR    Vlastní cesta pro ukládání modelových souborů
+| Parametr | Popis                                           |
+|----------|-------------------------------------------------|
+| `-il`    | Vstupní jazyk (např. `en`, `sk`)               |
+| `-ol`    | Výstupní jazyk (např. `sk`, `en`)              |
+| `-i`     | Interaktivní režim (zobrazení `[INFO]` logů)   |
+| `-v`     | Zobrazení verze a informací o autorovi         |
+| `-im`    | Instalace modelů z Argos OpenTech indexu       |
 
-PŘÍKLADY
-Základní překlad:
-  python uot.py -il en -ol sk Hello world
+## Proměnné prostředí
 
-Překlad s výpisem informací:
-  python uot.py -il en -ol sk Hello world -i
+| Proměnná         | Popis                                        |
+|------------------|----------------------------------------------|
+| `UOT_MODELS_DIR` | Vlastní cesta pro ukládání modelových souborů |
 
-Překlad ze stdin:
-  echo "Hello world" | python uot.py -il en -ol sk
+## Příklady
 
-Instalace modelů z Argos indexu:
-  python uot.py -im -i
+### Základní překlad
+```bash
+python uot.py -il en -ol sk Hello world
+```
 
-Zobrazení verze:
-  python uot.py -v
+### Překlad s výpisem informací
+```bash
+python uot.py -il en -ol sk Hello world -i
+```
 
-LICENCE
+### Překlad ze stdin
+```bash
+echo "Hello world" | python uot.py -il en -ol sk
+```
+
+### Instalace modelů z Argos indexu
+```bash
+python uot.py -im -i
+```
+
+### Zobrazení verze
+```bash
+python uot.py -v
+```
+
+## Licence
+
 MIT Licence
 
-=======================================================================
-🇸🇰 SLOVENČINA
-=======================================================================
+---
 
-ÚVOD
-Universal Offline Translator (UOT) je nástroj príkazového riadku na preklad textov medzi jazykmi bez pripojenia na internet, založený na Argos Translate.
+# 🇸🇰 Slovenčina
 
-FUNKCIE
-- Offline preklad (internet len na stiahnutie modelov)
-- Sťahovanie modelov priamo z Argos OpenTech indexu (-im)
-- Prehľadné CLI rozhranie
-- Podpora vstupu cez argumenty aj stdin
-- Zobrazenie výkonu a využitia pamäte pomocou -i
-- Vlastný adresár pre modely cez UOT_MODELS_DIR
+## Úvod
 
-INŠTALÁCIA
+**Universal Offline Translator (UOT)** je nástroj príkazového riadku na preklad textov medzi jazykmi **bez pripojenia na internet**, založený na **Argos Translate**.
 
-Windows
------------------------------------
-git clone https://github.com/yourusername/uuot.git
+## Funkcie
+
+- Offline preklad (internet len na stiahnutie modelov).
+- Sťahovanie modelov priamo z Argos OpenTech indexu (`-im`).
+- Prehľadné CLI rozhranie.
+- Podpora vstupu cez argumenty aj stdin.
+- Zobrazenie výkonu a využitia pamäte pomocou `-i`.
+- Vlastný adresár pre modely cez `UOT_MODELS_DIR`.
+
+## Inštalácia
+
+### Windows
+
+```bash
+git clone https://github.com/feckom/uot.git
 cd uot
 python -m venv venv
 venv\Scripts\activate.bat
 pip install -r requirements.txt
+```
 
-Linux / macOS
------------------------------------
-git clone https://github.com/yourusername/uuot.git
+### Linux / macOS
+
+```bash
+git clone https://github.com/feckom/uot.git
 cd uot
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-POŽIADAVKY
+## Požiadavky
+
 - Python 3.8+
 - Závislosti:
-  - argostranslate
-  - requests
-  - psutil
+  - `argostranslate`
+  - `requests`
+  - `psutil`
 
-POUŽITIE
+## Použitie
+
+```bash
 python uot.py [parametre] [text]
+```
 
-PARAMETRE
-- -il    Vstupný jazyk (napr. en, sk)
-- -ol    Výstupný jazyk (napr. sk, en)
-- -i     Interaktívny režim (zobrazuje [INFO] logy)
-- -v     Zobrazí verziu a informácie o autorovi
-- -im    Inštalácia modelov z Argos OpenTech indexu
+### Parametre
 
-PREMENNÉ PROSTREDIA
-- UOT_MODELS_DIR    Vlastný adresár pre modely
+| Parameter | Popis                                               |
+|-----------|-----------------------------------------------------|
+| `-il`     | Vstupný jazyk (napr. `en`, `sk`)                   |
+| `-ol`     | Výstupný jazyk (napr. `sk`, `en`)                  |
+| `-i`      | Interaktívny režim (zobrazuje `[INFO]` logy)       |
+| `-v`      | Zobrazí verziu a informácie o autorovi             |
+| `-im`     | Inštaluje modely z Argos OpenTech indexu           |
 
-PRÍKLADY
-Základný preklad:
-  python uot.py -il en -ol sk Hello world
+## Premenné prostredia
 
-Preklad s výpisom informácií:
-  python uot.py -il en -ol sk Hello world -i
+| Premenná         | Popis                                    |
+|------------------|------------------------------------------|
+| `UOT_MODELS_DIR` | Vlastný adresár pre modely               |
 
-Preklad zo stdin:
-  echo "Hello world" | python uot.py -il en -ol sk
+## Príklady
 
-Inštalácia modelov z Argos indexu:
-  python uot.py -im -i
+### Základný preklad
+```bash
+python uot.py -il en -ol sk Hello world
+```
 
-Zobrazenie verzie:
-  python uot.py -v
+### Preklad s výpisom informácií
+```bash
+python uot.py -il en -ol sk Hello world -i
+```
 
+### Preklad zo stdin
+```bash
+echo "Hello world" | python uot.py -il en -ol sk
+```
+
+### Inštalácia modelov z Argos indexu
+```bash
+python uot.py -im -i
+```
+
+### Zobrazenie verzie
+```bash
+python uot.py -v
+```
+
+## Licencia
+
+MIT Licencia
