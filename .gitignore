@@ -1,0 +1,24 @@
+# Ignore Python cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Ignore virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Ignore model files
+models/
+*.argosmodel
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
