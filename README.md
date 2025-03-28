@@ -1,7 +1,7 @@
 
 # Universal Offline Translator (UOT)
 
-**Version**: 1.0  
+**Version**: 1.16
 **Author**: Michal Fecko, 2025 (feckom@gmail.com)
 
 ---
@@ -103,6 +103,7 @@ python uot.py [options] [text]
 | `-i`   | Interactive mode (show `[INFO]` debug messages)             |
 | `-v`   | Show version and author information                         |
 | `-im`  | Install models from the Argos OpenTech index                |
+| '-p'   | Showing available language pairs                            |
 
 ## Environment Variables
 
@@ -203,6 +204,7 @@ python uot.py [parametry] [text]
 | `-i`     | Interaktivní režim (zobrazení `[INFO]` logů)   |
 | `-v`     | Zobrazení verze a informací o autorovi         |
 | `-im`    | Instalace modelů z Argos OpenTech indexu       |
+| '-p'     | Ukazuje dostupné páry jazykú                   |
 
 ## Proměnné prostředí
 
@@ -303,6 +305,7 @@ python uot.py [parametre] [text]
 | `-i`      | Interaktívny režim (zobrazuje `[INFO]` logy)       |
 | `-v`      | Zobrazí verziu a informácie o autorovi             |
 | `-im`     | Inštaluje modely z Argos OpenTech indexu           |
+| '-p'      | Ukazuje dostupné páry jazykov                      |
 
 ## Premenné prostredia
 
