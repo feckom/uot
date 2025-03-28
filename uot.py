@@ -123,8 +123,9 @@ def install_model(model_path, timeout=300):
         verbose_log(f"[WARNING] Model file '{model_path}' not found. Skipping.")
         return False
     try:
-        with open(model_path, 'rb') as model_file:
-            argostranslate.package.install_from_pipe(model_file, timeout=timeout)
+        #with open(model_path, 'rb') as model_file:
+        #    argostranslate.package.install_from_pipe(model_file, timeout=timeout)
+        argostranslate.package.install_from_path(model_path)
         verbose_log(f"[INFO] Successfully installed model '{os.path.basename(model_path)}'")
         return True
     except Exception as e:
@@ -267,9 +268,8 @@ def validate_language_code(code, available_languages):
 def main():
     global VERBOSE
 
-    available_languages = detect_available_languages()
-
     if len(sys.argv) == 1:
+        available_languages = detect_available_languages()
         print_help(available_languages)
         sys.exit(0)
 
@@ -285,6 +285,7 @@ def main():
         args = parser.parse_args()
     except Exception as e:
         print(f"[ERROR] Argument parsing failed: {e}", file=sys.stderr)
+        available_languages = detect_available_languages()
         print_help(available_languages)
         sys.exit(1)
 
@@ -297,6 +298,8 @@ def main():
     if args.im:
         install_models_from_index()
         sys.exit(0)
+
+    available_languages = detect_available_languages()
 
     if not args.il or not args.ol:
         print_help(available_languages)
