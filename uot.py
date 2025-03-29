@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Set, List, Dict, Tuple, Optional, Any, Union
 
 # Constants
-VERSION = "1.16"
+VERSION = "1.17"
 AUTHOR = "Michal Fecko, 2025 (feckom@gmail.com), https://github.com/uot.git"
 MODELS_DIR = os.getenv("UOT_MODELS_DIR", "models")
 BASE_URL = "https://data.argosopentech.com/argospm/v1/"
@@ -37,14 +37,21 @@ class TranslatorError(Exception):
     """Custom exception for translator errors"""
     pass
 
-def print_help(available_languages: Set[Tuple[str, str]]) -> None:
+def print_help(available_language_pairs: Set[Tuple[str, str]]) -> None:
     """Print help text with available languages."""
-    input_languages = {il for il, ol in available_languages}
-    output_languages = {ol for il, ol in available_languages}
+    installed_languages = get_installed_languages()
+    installed_codes = {lang.code for lang in installed_languages}
+
+    # Filter to only show installed and available pairs
+    valid_pairs = {(il, ol) for il, ol in available_language_pairs if il in installed_codes and ol in installed_codes}
+
+    # Extract unique input and output languages from valid pairs
+    input_languages = {il for il, ol in valid_pairs}
+    output_languages = {ol for il, ol in valid_pairs}
 
     il_str = format_languages(input_languages)
     ol_str = format_languages(output_languages)
-    
+
     help_text = f"""
 Universal Offline Translator (UOT)
 Author:
@@ -54,12 +61,12 @@ Version:
 Syntax:
   uot.py -il [input_language] -ol [output_language] text_to_translate [options]
 Parameters:
-  -il    input language (available: {il_str})
-  -ol    output language (available: {ol_str})
+  -il    input language (based on translation models in '{MODELS_DIR}': {il_str})
+  -ol    output language (based on translation models in '{MODELS_DIR}': {ol_str})
 Optional:
   -i     interactive mode (show info logs)
   -v     show version info and exit
-  -im    install models from Argos index
+  -im    install models from Argos index. Installs all available models.
   -c     clean model cache
   -l     list available languages and exit
   -p     show available pairs of languages and exit
@@ -68,8 +75,13 @@ Examples:
   uot.py -il sk -ol en Ahoj svet
 You can also use stdin:
   echo Hello world | uot.py -il en -ol sk -i
+
+Note:
+  Only language pairs with available models are supported.
+  Use -p to see available translation directions.
 """
     print(help_text)
+
 
 def print_version() -> None:
     """Print version information."""
@@ -109,17 +121,17 @@ def format_language_pairs(language_pairs: Set[Tuple[str, str]]) -> str:
     """Format language pairs in a compact combination form."""
     if not language_pairs:
         return "No language pairs available. Please install models."
-
+    
     # Group by input language
     grouped = {}
     for il, ol in language_pairs:
         grouped.setdefault(il, []).append(ol)
-
+    
     compact = []
     for il, ols in grouped.items():
         ols_str = ", ".join(sorted(ols))  # Ensure output languages are sorted
         compact.append(f"{il}→({ols_str})")  # Combination notation
-
+    
     return fill(", ".join(compact), width=80)
 
 @lru_cache(maxsize=1)
@@ -128,29 +140,36 @@ def get_installed_languages():
     return argostranslate.translate.get_installed_languages()
 
 def detect_available_languages() -> Set[Tuple[str, str]]:
-    """Detect available languages from model files and only return compatible pairs."""
+    """
+    Detect available language pairs from model files in the models directory.
+    Each model file has a name like "translate-en_sk-1_9.argosmodel".
+    Returns a set of tuples (source_lang, target_lang).
+    """
     models_dir = Path(MODELS_DIR)
     if not models_dir.exists():
         print(f"[ERROR] Models directory '{MODELS_DIR}' not found.", file=sys.stderr)
         sys.exit(1)
-    
-    model_files = list(models_dir.glob("*.argosmodel"))
+
+    model_files = list(models_dir.glob("translate-*.argosmodel"))
     if not model_files:
         print(f"[ERROR] No model files found in '{MODELS_DIR}'.", file=sys.stderr)
-        sys.exit(1)
-    
+        return set()
+
     available_language_pairs: Set[Tuple[str, str]] = set()
+
     for model_file in model_files:
-        name = model_file.stem
+        name = model_file.stem  # e.g. translate-en_sk-1_9
         if name.startswith("translate-"):
-            parts = name.split("_")
-            if len(parts) >= 2:
-                try:
-                    output_lang = parts[0].replace("translate-", "")
-                    input_lang = parts[1].split('-')[0]
-                    available_language_pairs.add((input_lang, output_lang))  # Store the pair
-                except IndexError:
-                    print(f"[WARNING] Could not parse language codes from model name: {name}", file=sys.stderr)
+            try:
+                parts = name[len("translate-"):].split("-")
+                # Join everything except the version back together (in case language codes have dashes)
+                lang_part = "-".join(parts[:-1])
+                source_target = lang_part.split("_")
+                if len(source_target) == 2:
+                    tgt, src = source_target #Fixed language detection
+                    available_language_pairs.add((src, tgt)) #Fixed language detection
+            except Exception as e:
+                print(f"[WARNING] Could not parse language pair from '{name}': {e}", file=sys.stderr)
 
     return available_language_pairs
 
@@ -207,27 +226,19 @@ def ensure_models_dir() -> None:
     Path(MODELS_DIR).mkdir(exist_ok=True)
 
 def clean_model_cache(verbose: bool = False) -> None:
-    """Clean the model cache."""
+    """Clean the model cache by uninstalling all installed packages."""
     try:
-        argostranslate.package.update_package_index()
-        verbose_log("[INFO] Package index updated successfully.", verbose)
-        
-        cache_dir = argostranslate.package.get_package_data_dir()
-        if os.path.exists(cache_dir):
-            for file in os.listdir(cache_dir):
-                file_path = os.path.join(cache_dir, file)
-                try:
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        import shutil
-                        shutil.rmtree(file_path)
-                except Exception as e:
-                    print(f"[ERROR] Failed to remove {file_path}: {e}", file=sys.stderr)
-        
-        print(f"[INFO] Cache cleaned successfully.")
-        # Reset the cache after cleaning
+        installed_packages = argostranslate.package.get_installed_packages()
+        if not installed_packages:
+            print("[INFO] No installed packages found.")
+            return
+
+        for package in installed_packages:
+            argostranslate.package.uninstall(package)
+            verbose_log(f"[INFO] Uninstalled: {package}", verbose)
+
         get_installed_languages.cache_clear()
+        print("[INFO] All installed translation models have been uninstalled.")
     except Exception as e:
         print(f"[ERROR] Failed to clean cache: {e}", file=sys.stderr)
         sys.exit(1)
@@ -355,12 +366,41 @@ def measure_memory_usage_mb() -> float:
     mem_mb = mem_bytes / (1024 * 1024)
     return round(mem_mb, 1)
 
-def validate_language_code(input_lang: str, output_lang: str, available_languages: Set[Tuple[str, str]]) -> bool:
-    """Validate that the language pair is available."""
-    if (input_lang, output_lang) not in available_languages:
-        print(f"[ERROR] Invalid language pair: {input_lang}-{output_lang}. ", file=sys.stderr, end="")
-        print(f"Available pairs: {format_language_pairs(available_languages)}")
+if not get_installed_languages():
+    verbose_log("[INFO] No installed languages found. Installing local models...", verbose=False) #Set default value False
+    install_models_from_local_dir(verbose=False) #Set default value False
+
+
+def validate_language_code(input_lang: str, output_lang: str, available_language_pairs: Set[Tuple[str, str]]) -> bool:
+    """
+    Validate that the language pair is available and installed.
+    
+    Args:
+        input_lang: Source language code
+        output_lang: Target language code
+        available_language_pairs: Set of available language pairs
+        
+    Returns:
+        bool: True if the language pair is valid, False otherwise
+    """
+    # Check if languages are installed
+    installed_languages = get_installed_languages()
+    installed_codes = {lang.code for lang in installed_languages}
+    
+    if input_lang not in installed_codes:
+        print(f"[ERROR] Input language '{input_lang}' is not installed.", file=sys.stderr)
         return False
+        
+    if output_lang not in installed_codes:
+        print(f"[ERROR] Output language '{output_lang}' is not installed.", file=sys.stderr)
+        return False
+    
+    # Check if there's a direct translation path
+    if (input_lang, output_lang) not in available_language_pairs:
+        print(f"[ERROR] No translation path from '{input_lang}' to '{output_lang}'.", file=sys.stderr)
+        print(f"[TIP] You may need to install a model for this language pair using 'uot.py -im'", file=sys.stderr)
+        return False
+    
     return True
 
 def find_translation(from_code: str, to_code: str) -> Any:
@@ -378,12 +418,18 @@ def find_translation(from_code: str, to_code: str) -> Any:
     to_lang = next((lang for lang in installed_languages if lang.code == to_code), None)
     
     if not from_lang:
-        installed_codes = [lang.code for lang in installed_languages]
-        raise TranslatorError(f"Input language '{from_code}' not installed. Installed languages: {', '.join(installed_codes)}")
+        # Limit the number of displayed codes to avoid overly long error messages
+        installed_codes = [lang.code for lang in installed_languages][:10]
+        if len(installed_languages) > 10:
+            installed_codes.append("...")
+        raise TranslatorError(f"Input language '{from_code}' not installed. Some installed languages: {', '.join(installed_codes)}")
     
     if not to_lang:
-        installed_codes = [lang.code for lang in installed_languages]
-        raise TranslatorError(f"Output language '{to_code}' not installed. Installed languages: {', '.join(installed_codes)}")
+        # Limit the number of displayed codes to avoid overly long error messages
+        installed_codes = [lang.code for lang in installed_languages][:10]
+        if len(installed_languages) > 10:
+            installed_codes.append("...")
+        raise TranslatorError(f"Output language '{to_code}' not installed. Some installed languages: {', '.join(installed_codes)}")
     
     translation = from_lang.get_translation(to_lang)
     if not translation:
@@ -393,35 +439,93 @@ def find_translation(from_code: str, to_code: str) -> Any:
     LANGUAGE_CACHE[cache_key] = translation
     return translation
 
-def list_languages(language_pairs: Set[Tuple[str, str]], verbose: bool = False) -> None:
-    """List all available languages."""
-    available_languages = detect_available_languages()
+def list_languages(available_language_pairs: Set[Tuple[str, str]], verbose: bool = False) -> None:
+    """
+    List all available languages with their translation capabilities.
     
-    print("Available languages:")
-    for il, ol in sorted(available_languages):
-        print(f"  {il} -> {ol}")
+    Args:
+        available_language_pairs: Set of available language pairs
+        verbose: Whether to show detailed info
+    """
+    installed_languages = get_installed_languages()
+    installed_codes = {lang.code for lang in installed_languages}
+    
+    # Group by source language for better readability
+    source_to_targets = {}
+    for source, target in available_language_pairs:
+        if source in installed_codes and target in installed_codes:
+            source_to_targets.setdefault(source, set()).add(target)
+    
+    if source_to_targets:
+        print("Available language pairs (installed models):")
+        for source in sorted(source_to_targets.keys()):
+            targets = sorted(source_to_targets[source])
+            print(f"  {source} → {', '.join(targets)}")
+    else:
+        print("No language pairs available with installed models.")
+        print("[TIP] Run 'uot.py -im' to download and install language models.")
     
     if verbose:
-        # Show additional information about installed languages
-        installed = get_installed_languages()
-        print("\nInstalled language models:")
-        for lang in installed:
-            translations = [t.to_lang.code for t in lang.translations]
-            if translations:
-                print(f"  {lang.code} → {', '.join(translations)}")
-            else:
-                print(f"  {lang.code} (no translations)")
+        # Show additional information about language codes
+        print("\nLanguage code reference:")
+        # Map common language codes to full names
+        lang_names = {
+            'ar': 'Arabic', 'az': 'Azerbaijani', 'bg': 'Bulgarian', 'bn': 'Bengali', 
+            'ca': 'Catalan', 'cs': 'Czech', 'da': 'Danish', 'de': 'German', 
+            'el': 'Greek', 'en': 'English', 'eo': 'Esperanto', 'es': 'Spanish', 
+            'et': 'Estonian', 'eu': 'Basque', 'fa': 'Persian', 'fi': 'Finnish', 
+            'fr': 'French', 'ga': 'Irish', 'gl': 'Galician', 'he': 'Hebrew', 
+            'hi': 'Hindi', 'hu': 'Hungarian', 'id': 'Indonesian', 'it': 'Italian', 
+            'ja': 'Japanese', 'ko': 'Korean', 'lt': 'Lithuanian', 'lv': 'Latvian', 
+            'ms': 'Malay', 'nb': 'Norwegian', 'nl': 'Dutch', 'pl': 'Polish', 
+            'pt': 'Portuguese', 'ro': 'Romanian', 'ru': 'Russian', 'sk': 'Slovak', 
+            'sl': 'Slovenian', 'sq': 'Albanian', 'sv': 'Swedish', 'th': 'Thai', 
+            'tl': 'Tagalog', 'tr': 'Turkish', 'uk': 'Ukrainian', 'zh': 'Chinese (Simplified)', 
+            'zt': 'Chinese (Traditional)'
+        }
+        for code in sorted(set(lang_code for pair in available_language_pairs for lang_code in pair)):
+            if code in installed_codes:
+                name = lang_names.get(code, f"Unknown ({code})")
+                print(f"  {code}: {name}")
 
-def show_language_pairs(language_pairs: Set[Tuple[str, str]]) -> None:
-    """Show available pairs of languages in compact combination form and exit."""
-    print(format_language_pairs(language_pairs))
+def show_language_pairs(available_language_pairs: Set[Tuple[str, str]]) -> None:
+    """
+    Show available language pairs in a user-friendly format.
+
+    Args:
+        available_language_pairs: Set of available language pairs
+    """
+    installed_languages = get_installed_languages()
+    installed_codes = {lang.code for lang in installed_languages}
+
+    # Filter pairs to only include installed languages
+    valid_pairs = {(src, tgt) for src, tgt in available_language_pairs 
+                   if src in installed_codes and tgt in installed_codes}
+
+    if not valid_pairs:
+        print("No language pairs available with installed models.")
+        print("[TIP] Run 'uot.py -im' to download and install language models.")
+        return
+
+    # Group by source language
+    source_to_targets = {}
+    for source, target in valid_pairs:
+        source_to_targets.setdefault(source, set()).add(target)
+
+    print(f"Available translation pairs (based on .argosmodel files in '{MODELS_DIR}'):")
+    for source in sorted(source_to_targets.keys()):
+        targets = sorted(source_to_targets[source])
+        targets_str = ', '.join(targets)
+        print(f"  {source} → ({targets_str})")
 
 def main() -> None:
     """Main function."""
-    if len(sys.argv) == 1:
-        language_pairs = detect_available_languages()
-        print_help(language_pairs)
-        sys.exit(0)
+    available_language_pairs = detect_available_languages()  # Get all available pairs
+    
+    # Show only installed languages pairs on main usage.
+    installed_languages = get_installed_languages()
+    installed_codes = {lang.code for lang in installed_languages}
+    available_language_pairs = {(il, ol) for il, ol in available_language_pairs if il in installed_codes and ol in installed_codes}
     
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('-il', type=str, help="Input language code")
@@ -433,97 +537,87 @@ def main() -> None:
     parser.add_argument('-l', action='store_true', help="List available languages and exit")
     parser.add_argument('-p', action='store_true', help="Show available pairs of languages and exit")
     parser.add_argument('text', nargs=argparse.REMAINDER, help="Text to translate")
-    
+
     try:
         args = parser.parse_args()
+        verbose = args.i
     except Exception as e:
         print(f"[ERROR] Argument parsing failed: {e}", file=sys.stderr)
-        language_pairs = detect_available_languages()
-        print_help(language_pairs)
+        print_help(available_language_pairs)
         sys.exit(1)
     
-    verbose = args.i
-    
+    if len(sys.argv) == 1:
+        print_help(available_language_pairs)
+        sys.exit(0)
+
     if args.v:
         print_version()
         sys.exit(0)
-    
+
     if args.c:
         clean_model_cache(verbose)
         sys.exit(0)
-    
+
     if args.im:
         install_models_from_index(verbose)
         sys.exit(0)
-    
-    # Detect language pairs from model files
-    language_pairs = detect_available_languages()
-    
+
     if args.l:
-        list_languages(language_pairs, verbose)
+        list_languages(available_language_pairs, verbose)
         sys.exit(0)
 
     if args.p:
-        show_language_pairs(language_pairs)
+        # Ensure models are installed before showing pairs
+        if not get_installed_languages():
+            verbose_log("[INFO] No installed languages found. Installing local models...", verbose)
+            install_models_from_local_dir(verbose)
+        show_language_pairs(available_language_pairs)
         sys.exit(0)
-    
+
     if not args.il or not args.ol:
-        print_help(language_pairs)
+        print_help(available_language_pairs)
         sys.exit(1)
-    
-    # First check if the specified language pair is valid
-    available_languages = detect_available_languages()
-    if not validate_language_code(args.il, args.ol, available_languages):
-        # Suggest installing models if the language pair is invalid
+
+    if not validate_language_code(args.il, args.ol, available_language_pairs):
         print(f"[TIP] You may need to run 'uot.py -im' to download and install language models.", file=sys.stderr)
         sys.exit(1)
-    
+
     if not args.text:
         verbose_log("[INFO] Waiting for input from stdin... (Ctrl+D to end)", verbose)
         args.text = [sys.stdin.read().strip()]
         if not args.text[0]:
             print("[ERROR] No input provided.", file=sys.stderr)
-            print_help(language_pairs)
+            print_help(available_language_pairs)
             sys.exit(1)
-    
+
     input_text = " ".join(args.text).strip()
-    
-    # Make sure we have models installed
+
     if not get_installed_languages():
         verbose_log("[INFO] No installed languages found. Installing local models...", verbose)
         install_models_from_local_dir(verbose)
-    
-    # Now check if the required languages are actually installed (not just available)
-    installed_languages = get_installed_languages()
-    installed_codes = [lang.code for lang in installed_languages]
-    
-    missing_languages = []
-    if args.il not in installed_codes:
-        missing_languages.append(args.il)
-    if args.ol not in installed_codes:
-        missing_languages.append(args.ol)
 
     try:
         verbose_log(f"[INFO] Looking for translation path: {args.il} → {args.ol}", verbose)
         translation = find_translation(args.il, args.ol)
-        
+
         verbose_log(f"[INFO] Translating: '{input_text}'", verbose)
         start_time = time.perf_counter()
-        
+
         output_text = translation.translate(input_text)
-        
+
         elapsed_time = time.perf_counter() - start_time
         memory_usage_mb = measure_memory_usage_mb()
-        
+
         print(output_text)
         verbose_log(f"[INFO] Translation took {elapsed_time:.2f} seconds, uses {memory_usage_mb} MB RAM", verbose)
-        
+
     except TranslatorError as e:
         print(f"[ERROR] {e}", file=sys.stderr)
-        # If we have both languages installed but no translation path, suggest downloading models
         available_languages = detect_available_languages()
-        if (args.il, args.ol) in available_languages:
-            print(f"[TIP] You may need to download a specific model for {args.il}-{args.ol} with 'uot.py -im'", file=sys.stderr)
+        installed_languages = get_installed_languages()
+        installed_codes = [lang.code for lang in installed_languages]
+        if (args.il in installed_codes) and (args.ol in installed_codes):
+            print(f"[TIP] You may need to run 'uot.py -im' to download a specific model for {args.il}-{args.ol}.", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"[ERROR] Translation failed: {e}", file=sys.stderr)
