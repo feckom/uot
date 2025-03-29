@@ -1,7 +1,7 @@
 
 # Universal Offline Translator (UOT)
 
-**Version**: 1.16
+**Version**: 1.17
 **Author**: Michal Fecko, 2025 (feckom@gmail.com)
 
 ---
